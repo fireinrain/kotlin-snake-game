@@ -18,7 +18,7 @@ import javax.swing.Timer
 
 class GameBoard : JPanel(), ActionListener {
 
-    private val boardWith = 300
+    private val boardWidth = 300
     private val boardHeight = 300
     private val dotSize = 10
     private val allDots = 900
@@ -32,203 +32,215 @@ class GameBoard : JPanel(), ActionListener {
     private var appleX: Int = 0
     private var appleY: Int = 0
 
-    private var leftDirection: Boolean = false
-    private var rightDirection: Boolean = true
-    private var upDirection: Boolean = false
-    private var downDirection: Boolean = false
+    private var leftDirection = false
+    private var rightDirection = true
+    private var upDirection = false
+    private var downDirection = false
     private var inGame = true
 
     private var timer: Timer? = null
-    private var dotImage: Image? = null
-    private var appleImage: Image? = null
-    private var snakeHeadImage: Image? = null
-
-    // 初始化
+    private var ball: Image? = null
+    private var apple: Image? = null
+    private var head: Image? = null
 
     init {
+
         this.addKeyListener(GameKeyAdapter())
-        background = Color.BLACK
+        background = Color.black
         isFocusable = true
 
-        preferredSize = Dimension(boardWith, boardHeight)
-        // 装载图片
-        loadGameImages()
-        //初始化游戏
-        initGames()
+        preferredSize = Dimension(boardWidth, boardHeight)
+        loadImages()
+        initGame()
     }
 
+    private fun loadImages() {
 
-    private fun loadGameImages() {
-        val dot = ImageIcon("src/main/resources/dot.png")
-        this.dotImage = dot.image
+        val iid = ImageIcon("src/main/resources/dot.png")
+        ball = iid.image
 
-        val apple = ImageIcon("src/main/resources/apple.png")
-        this.appleImage = apple.image
+        val iia = ImageIcon("src/main/resources/apple.png")
+        apple = iia.image
 
-        val head = ImageIcon("src/main/resources/sname_head.png")
-        this.snakeHeadImage = head.image
-
+        val iih = ImageIcon("src/main/resources/snake_head.png")
+        head = iih.image
     }
 
-    private fun initGames() {
-        this.nOfDots = 3
-        for (z in 0 until this.nOfDots) {
+    private fun initGame() {
+
+        nOfDots = 3
+
+        for (z in 0 until nOfDots) {
             x[z] = 50 - z * 10
             y[z] = 50
         }
-        this.locateApple()
 
-        this.timer = Timer(delay, this)
-        this.timer!!.start()
+        locateApple()
 
+        timer = Timer(delay, this)
+        timer!!.start()
     }
 
-    //apple 随机出现
-    private fun locateApple() {
-        var randomPos = (Math.random() * this.randPos).toInt()
-        this.appleX = randomPos * this.dotSize
-        randomPos = (Math.random() * this.randPos).toInt()
-        this.appleY = randomPos * this.dotSize
+    public override fun paintComponent(g: Graphics) {
+        super.paintComponent(g)
 
+        doDrawing(g)
     }
 
-    //游戏开始
-    override fun actionPerformed(e: ActionEvent?) {
-        if (this.inGame) {
-            this.checkApple()
-            this.checkCollision()
-            this.move()
-        }
-        this.repaint()
-    }
+    private fun doDrawing(g: Graphics) {
 
-    override fun paintComponents(g: Graphics?) {
-        super.paintComponents(g)
-        this.doDrawing(g)
-    }
+        if (inGame) {
 
-    private fun doDrawing(g: Graphics?) {
-        assert(g != null) { "g:Graphics cant be null" }
-        if (this.inGame) {
-            g!!.drawImage(this.appleImage, this.appleX, this.appleY, this)
-            for (z in 0..this.nOfDots) {
+            g.drawImage(apple, appleX, appleY, this)
+
+            for (z in 0 until nOfDots) {
                 if (z == 0) {
-                    g.drawImage(this.snakeHeadImage, this.x[z], this.y[z], this)
+                    g.drawImage(head, x[z], y[z], this)
                 } else {
-                    g.drawImage(this.dotImage, this.x[z], this.y[z], this)
+                    g.drawImage(ball, x[z], y[z], this)
                 }
             }
+
             Toolkit.getDefaultToolkit().sync()
+
         } else {
-            this.gameOver(g)
+
+            gameOver(g)
         }
-
     }
 
-    private fun gameOver(g: Graphics?) {
-        assert(g != null) { "g cant be null" }
+    private fun gameOver(g: Graphics) {
 
-        val msg: String = "Game Over"
-        val smallFont = Font("Helvetica", Font.BOLD, 14)
-        val fontMetrics = this.getFontMetrics(smallFont)
+        val msg = "Game Over"
+        val small = Font("Helvetica", Font.BOLD, 14)
+        val fontMetrics = getFontMetrics(small)
 
-        val renderHint = RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        renderHint[RenderingHints.KEY_RENDERING] = RenderingHints.VALUE_RENDER_QUALITY
+        val rh = RenderingHints(
+            RenderingHints.KEY_ANTIALIASING,
+            RenderingHints.VALUE_ANTIALIAS_ON)
 
-        (g!! as Graphics2D).setRenderingHints(renderHint)
+        rh[RenderingHints.KEY_RENDERING] = RenderingHints.VALUE_RENDER_QUALITY
 
-        g.color = Color.WHITE
-        g.font = smallFont
-        //居中显示
-        g.drawString(msg, this.boardWith - fontMetrics.stringWidth(msg) / 2, this.boardHeight / 2)
+        (g as Graphics2D).setRenderingHints(rh)
 
+        g.color = Color.white
+        g.font = small
+        g.drawString(msg, (boardWidth - fontMetrics.stringWidth(msg)) / 2, boardHeight / 2)
     }
 
-    // apple 不能出现在原点
     private fun checkApple() {
-        if (x[0] == this.appleX && y[0] == this.appleY) {
-            this.nOfDots++
-            this.locateApple()
+
+        if (x[0] == appleX && y[0] == appleY) {
+
+            nOfDots++
+            locateApple()
         }
     }
 
-    // 移动逻辑
     private fun move() {
-        for (z in this.nOfDots downTo 1) {
+
+        for (z in nOfDots downTo 1) {
             x[z] = x[z - 1]
             y[z] = y[z - 1]
         }
-        if (this.leftDirection) {
-            x[0] -= this.dotSize
+
+        if (leftDirection) {
+            x[0] -= dotSize
         }
-        if (this.rightDirection) {
-            x[0] += this.dotSize
+
+        if (rightDirection) {
+            x[0] += dotSize
         }
-        if (this.upDirection) {
-            y[0] -= this.dotSize
+
+        if (upDirection) {
+            y[0] -= dotSize
         }
-        if (this.downDirection) {
-            y[0] += this.dotSize
+
+        if (downDirection) {
+            y[0] += dotSize
         }
     }
 
-    //碰撞检测
     private fun checkCollision() {
-        for (z in this.nOfDots downTo 1) {
-            if (z > 4 && x[0] == y[z] && y[0] == y[z]) {
-                this.inGame = false
+
+        for (z in nOfDots downTo 1) {
+
+            if (z > 4 && x[0] == x[z] && y[0] == y[z]) {
+                inGame = false
             }
         }
-        if (y[0] >= this.boardHeight) {
-            this.inGame = false
+
+        if (y[0] >= boardHeight) {
+            inGame = false
         }
+
         if (y[0] < 0) {
-            this.inGame = false
+            inGame = false
         }
-        if (x[0] >= this.boardWith) {
-            this.inGame = false
+
+        if (x[0] >= boardWidth) {
+            inGame = false
         }
+
         if (x[0] < 0) {
-            this.inGame = false
+            inGame = false
         }
-        if (!this.inGame) {
-            this.timer!!.stop()
+
+        if (!inGame) {
+            timer!!.stop()
         }
+    }
+
+    private fun locateApple() {
+
+        var r = (Math.random() * randPos).toInt()
+        appleX = r * dotSize
+
+        r = (Math.random() * randPos).toInt()
+        appleY = r * dotSize
+    }
+
+    override fun actionPerformed(e: ActionEvent) {
+
+        if (inGame) {
+
+            checkApple()
+            checkCollision()
+            move()
+        }
+
+        repaint()
     }
 
     private inner class GameKeyAdapter : KeyAdapter() {
+
         override fun keyPressed(e: KeyEvent?) {
+
             val key = e!!.keyCode
-            //如果向左
+
             if (key == KeyEvent.VK_LEFT && !rightDirection) {
-                println("按键向左")
                 leftDirection = true
                 upDirection = false
                 downDirection = false
             }
-            // 如果向右
+
             if (key == KeyEvent.VK_RIGHT && !leftDirection) {
-                println("按键向右")
                 rightDirection = true
                 upDirection = false
                 downDirection = false
             }
-            //如果向下
-            if (key == KeyEvent.VK_DOWN && !upDirection) {
-                println("按键向下")
-                downDirection = true
-                leftDirection = false
-                rightDirection = false
-            }
-            // 如果向上
+
             if (key == KeyEvent.VK_UP && !downDirection) {
-                println("按键向上")
                 upDirection = true
-                leftDirection = false
                 rightDirection = false
+                leftDirection = false
             }
 
+            if (key == KeyEvent.VK_DOWN && !upDirection) {
+                downDirection = true
+                rightDirection = false
+                leftDirection = false
+            }
         }
     }
-
 }

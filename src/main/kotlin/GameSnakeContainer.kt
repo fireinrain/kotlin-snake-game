@@ -17,13 +17,13 @@ class GameSnakeContainer : JFrame() {
 
     private fun initSnake() {
         this.add(GameBoard())
-        this.title = "Sname Game"
+        this.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+        this.title = "Snake Game"
         this.isResizable = false
         this.pack()
         this.setLocationRelativeTo(null)
         this.isVisible = true
 
-        this.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
     }
 
     companion object {
